@@ -17,6 +17,6 @@ public class VariableUnitTest {
 
         assertEquals(var1.toString(), "x^3");
         assertEquals(var2.toString(), "x");
-        assertEquals(var2.toString(), "x^-1");
+        assertEquals(var3.toString(), "x^-1");
     }
 }

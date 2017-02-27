@@ -14,9 +14,11 @@ public class VariableUnitTest {
         Variable var1 = new Variable("x", 3);
         Variable var2 = new Variable("x", 0);
         Variable var3 = new Variable("x", -1);
+        Variable var4 = new Variable("x", 1);
 
-        assertEquals(var1.toString(), "x^3");
-        assertEquals(var2.toString(), "x");
-        assertEquals(var3.toString(), "x^-1");
+        assertEquals("x^3", var1.toString());
+        assertEquals("", var2.toString());
+        assertEquals("x^-1", var3.toString());
+        assertEquals("x", var4.toString());
     }
 }

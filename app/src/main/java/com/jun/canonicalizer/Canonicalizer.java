@@ -18,15 +18,18 @@ public class Canonicalizer {
         Transformer transformer = new Transformer();
         while (true) {
             try {
-                if (mode != null && mode.isEmpty()) {
-                    //Scanner scanner = new Scanner(System.in);
+                if (mode.isEmpty()) {
                     System.out.println("Enter 'f' for File Mode 'i' for Interactive Mode.");
                     mode = scanner.nextLine();
                 }
 
                 if (mode.equals("f") || mode.equals("F")) {
-                    System.out.println("Enter Filename:");
+                    System.out.println("Enter Filename or Enter 'c' to change mode:");
                     String fileName = scanner.nextLine();
+                    if (fileName.equals("c")) {
+                        mode = "";
+                        continue;
+                    }
                     FileReader fileReader = new FileReader(fileName);
                     BufferedReader bufferedReader = new BufferedReader(fileReader);
 
@@ -38,19 +41,24 @@ public class Canonicalizer {
                         if (transformer.isValidInput(lineEq)) {
                             String res = transformer.transformEq(lineEq);
                             System.out.print(lineEq + " => " + res);
+                            System.out.println();
                             bufferedWriter.write(res);
-
                         } else {
                             System.out.println("This input is invalid.");
                             bufferedWriter.write("This input is invalid.");
                         }
+                        bufferedWriter.newLine();
                     }
                     bufferedReader.close();
                     bufferedWriter.close();
 
                 } else if (mode.equals("i") || mode.equals("I")) {
-                    System.out.println("Enter Equation:");
+                    System.out.println("Enter Equation or Enter 'c' to change mode:");
                     String equation = scanner.nextLine();
+                    if (equation.equals("c")) {
+                        mode = "";
+                        continue;
+                    }
                     if (transformer.isValidInput(equation)) {
                         System.out.println(transformer.transformEq(equation));
                     } else {
@@ -58,6 +66,7 @@ public class Canonicalizer {
                     }
                 } else {
                     System.out.println("No such option.");
+                    mode = "";
                 }
 
             } catch (IOException e) {

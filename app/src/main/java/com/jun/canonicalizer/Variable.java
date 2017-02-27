@@ -17,11 +17,7 @@ public class Variable implements Comparable<Variable> {
     }
 
     public void setVarName(String varName) {
-//        char[] varNameArr = varName.toCharArray();
-//        Arrays.sort(varNameArr);
-        // so that yx is equal to xy
         this.varName = varName;
-        //String.valueOf(varNameArr);
     }
 
     public String getVarName() {
@@ -60,8 +56,4 @@ public class Variable implements Comparable<Variable> {
             return (this.getVarName() + "^" + this.getPower());
         }
     }
-//    @Override
-//    public int compare(Variable var1, Variable var2) {
-//        return var1.getVarName().compareTo(var2.getVarName());
-//    }
 }

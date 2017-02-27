@@ -41,7 +41,6 @@ public class Transformer {
         // Combine all the terms into one map
         while (rightMapEntries.hasNext()) {
             Map.Entry<String, Double> entry = rightMapEntries.next();
-//            System.out.println(pair.getKey() + " = " + pair.getValue());
             Double coefficient = entry.getValue();
             if (leftTermMap.containsKey(entry.getKey())) {
                 leftTermMap.put(entry.getKey(), leftTermMap.get(entry.getKey()) - coefficient);
@@ -96,10 +95,16 @@ public class Transformer {
         transformedSb.append(" = 0");
         return transformedSb.toString();
     }
+
     /**
      * Build a HashMap that maps variables to their coefficient and sum of numbers to "#"
      * if a variable has a power 0, its coefficient contributes to the sum of number
-     * TODO: count matching parenthesis?
+     * Main Idea of the algorithm to buildTermMap in Transformer.java as following:
+     * - Go through each character in the equation and categorize each character into coefficient, term, power or number.
+     * - Use 3 stacks to handle brackets:
+     * - one stack to keep track of number
+     * - two stacks to keep track of all the other terms
+     * - runtime: O(n) and space: O(n)
      */
     public HashMap<String, Double> buildTermMap(String lineEq) {
         HashMap<String, Double> termMap = new HashMap<>();

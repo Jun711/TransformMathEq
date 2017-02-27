@@ -116,6 +116,8 @@ public class Transformer {
         Deque<Term> inBracketStack = new ArrayDeque<>();
         Deque<Term> processBracketStack = new ArrayDeque<>();
         Deque<Double> numberStack = new ArrayDeque<>();
+        int countLeftBracket = 0;
+        int countRightBracket = 0;
 
         for (int i = 0; i < lineEq.length(); i++) {
             if (Character.isDigit(lineEq.charAt(i))) {
@@ -146,6 +148,7 @@ public class Transformer {
             } else if (lineEq.charAt(i) == '-') {
                 sign = -1;
             } else if (lineEq.charAt(i) == '(') {
+                countLeftBracket++;
                 // set variables of the term to null to represent sign
                 Term signTerm = new Term(1.0 * sign, null);
                 inBracketStack.addFirst(signTerm);
@@ -154,6 +157,7 @@ public class Transformer {
                 sum = 0.0;
                 sign = 1;
             } else if (lineEq.charAt(i) == ')') {
+                countRightBracket++;
                 // sum values within brackets and the numbers to left of the current brackets
                 sum = sum * numberStack.removeFirst() + numberStack.removeFirst();
                 while (inBracketStack.peekFirst().getVariables() != null) {
@@ -243,6 +247,8 @@ public class Transformer {
             Term sumTerm = new Term(sum, sumTermVariable);
             termMap.put(sumTerm.getVariableString(), sumTerm.getCoefficient());
         }
+
+
         return termMap;
     }
 

@@ -9,9 +9,7 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-
 import static org.junit.Assert.*;
-
 
 /**
  * To work on unit tests, switch the Test Artifact in the Build Variants view.
@@ -44,6 +42,7 @@ public class TransformerUnitTest {
         assertFalse(transformer.isValidInput("(1^2x - 3.5xy)(x) = y^2 - xy + y"));
         assertFalse(transformer.isValidInput("(1^2x - 3.xy)(x) = y^2 - xy + y"));
         assertFalse(transformer.isValidInput("x - ((x^2.3y^2 - x) + x) = 0"));
+        assertFalse(transformer.isValidInput("x - (xy)^3) = 0"));
 
         assertTrue(transformer.isValidInput("x - ((x^-2y^2 - x) + x) = 0"));
         assertTrue(transformer.isValidInput("x - ((x^2y^2 - x) + x) = 0"));
@@ -58,6 +57,7 @@ public class TransformerUnitTest {
         assertTrue(transformer.isValidInput("0 = 0"));
     }
 
+    // Check if terms work properly e.g. "xy" == "yx"
     @Test
     public void testBuildTermMapCheckTerms() {
         Transformer transformer = new Transformer();
@@ -70,13 +70,14 @@ public class TransformerUnitTest {
         HashMap<String, Double> termMap1 = transformer.buildTermMap("3x + y - 1");
         assertEquals(keys1, termMap1.keySet());
 
-        // check if composite variables work
+        // check if composite variables work and order of the variables don't matter
         HashSet<String> keys2 = new HashSet<>();
         keys2.add("xz");
         keys2.add("y");
         assertEquals(2, keys2.size());
-        HashMap<String, Double> termMap2 = transformer.buildTermMap("3xz + y");
+        HashMap<String, Double> termMap2 = transformer.buildTermMap("3xz + y + 3zx");
         assertEquals(keys2, termMap2.keySet());
+        assertEquals(Double.valueOf(6.0), termMap2.get("xz"));
 
         // check if variables that have power work
         HashSet<String> keys3 = new HashSet<>();
@@ -470,6 +471,15 @@ public class TransformerUnitTest {
 
         // need to import hamcrest-all.jar to use the following test
         assertThat(transformer.combineTerms(leftTermMap8, rightTermMap8), anyOf(is("- 8 - y = 0"),is("- y - 8 = 0")));
+
+        // test 9
+        // will get canonical form back if the input is already in canonical form
+        HashMap<String, Double> leftTermMap9 = transformer.buildTermMap("x^2 - y^2");
+        HashMap<String, Double> rightTermMap9 = transformer.buildTermMap("0");
+        assertEquals(Double.valueOf(1.0), leftTermMap9.get("x^2"));
+
+        // need to import hamcrest-all.jar to use the following test
+        assertThat(transformer.combineTerms(leftTermMap9, rightTermMap9), anyOf(is("x^2 - y^2 = 0"),is("- y^2 + x^2 = 0")));
     }
 
 

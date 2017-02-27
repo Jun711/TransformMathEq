@@ -12,6 +12,13 @@ import java.util.Scanner;
  * Run Transformer to transform equations to canonical forms
  */
 public class Canonicalizer {
+
+    protected static final String MODE_SELECTION_MSG = "Enter 'f' for File Mode 'i' for Interactive Mode.";
+    protected static final String CHANGE_MODE_FROM_FILE_MSG = "Enter Filename or Enter 'c' to change mode:";
+    protected static final String CHANGE_MODE_FROM_INT_MSG = "Enter Equation or Enter 'c' to change mode:";
+    protected static final String UNSUPPORTED_INPUT_MSG = "This input is not supported.";
+    protected static final String NO_SUCH_MODE_MSG = "Sorry, no such mode.";
+
     public static void main(String[] args) {
         String mode = "";
         Scanner scanner = new Scanner(System.in);
@@ -19,12 +26,12 @@ public class Canonicalizer {
         while (true) {
             try {
                 if (mode.isEmpty()) {
-                    System.out.println("Enter 'f' for File Mode 'i' for Interactive Mode.");
+                    System.out.println(MODE_SELECTION_MSG);
                     mode = scanner.nextLine();
                 }
 
                 if (mode.equals("f") || mode.equals("F")) {
-                    System.out.println("Enter Filename or Enter 'c' to change mode:");
+                    System.out.println(CHANGE_MODE_FROM_FILE_MSG);
                     String fileName = scanner.nextLine();
                     if (fileName.equals("c")) {
                         mode = "";
@@ -44,8 +51,8 @@ public class Canonicalizer {
                             System.out.println();
                             bufferedWriter.write(res);
                         } else {
-                            System.out.println("This input is invalid.");
-                            bufferedWriter.write("This input is invalid.");
+                            System.out.println(UNSUPPORTED_INPUT_MSG);
+                            bufferedWriter.write(UNSUPPORTED_INPUT_MSG);
                         }
                         bufferedWriter.newLine();
                     }
@@ -53,7 +60,7 @@ public class Canonicalizer {
                     bufferedWriter.close();
 
                 } else if (mode.equals("i") || mode.equals("I")) {
-                    System.out.println("Enter Equation or Enter 'c' to change mode:");
+                    System.out.println(CHANGE_MODE_FROM_INT_MSG);
                     String equation = scanner.nextLine();
                     if (equation.equals("c")) {
                         mode = "";
@@ -62,10 +69,10 @@ public class Canonicalizer {
                     if (transformer.isValidInput(equation)) {
                         System.out.println(transformer.transformEq(equation));
                     } else {
-                        System.out.println("This input is invalid.");
+                        System.out.println(UNSUPPORTED_INPUT_MSG);
                     }
                 } else {
-                    System.out.println("No such option.");
+                    System.out.println(NO_SUCH_MODE_MSG);
                     mode = "";
                 }
 

@@ -13,6 +13,8 @@ import java.util.Map;
  */
 public class Transformer {
 
+    protected static final String UNEVEN_BRACKETS_ERROR_MSG = "The equation doesn't have an even number of brackets.";
+
     public Transformer() {
 
     }
@@ -27,7 +29,11 @@ public class Transformer {
         String rightSide = sides[1].trim();
 
         HashMap<String, Double> leftTermMap= buildTermMap(leftSide);
+        if (leftTermMap.containsKey("!"))
+            return UNEVEN_BRACKETS_ERROR_MSG;
         HashMap<String, Double> rightTermMap= buildTermMap(rightSide);
+        if (rightTermMap.containsKey("!"))
+            return UNEVEN_BRACKETS_ERROR_MSG;
 
         return combineTerms(leftTermMap, rightTermMap);
     }
@@ -248,6 +254,13 @@ public class Transformer {
             termMap.put(sumTerm.getVariableString(), sumTerm.getCoefficient());
         }
 
+        // for checking if there are even and odd numbers of brackets
+        if (countLeftBracket != countRightBracket) {
+            ArrayList<Variable> bracketTermVariable = new ArrayList<>();
+            bracketTermVariable.add(new Variable("!", 1));
+            Term bracketTerm = new Term(1.0, bracketTermVariable);
+            termMap.put(bracketTerm.getVariableString(), bracketTerm.getCoefficient());
+        }
 
         return termMap;
     }

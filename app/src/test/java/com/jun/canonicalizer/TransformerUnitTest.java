@@ -37,11 +37,15 @@ public class TransformerUnitTest {
         assertFalse(transformer.isValidInput("x^2 + 3.5xy y = y^ - xy + y"));
         assertFalse(transformer.isValidInput("x7^2 + 3.5xy = y^2 - xy + y"));
         assertFalse(transformer.isValidInput("1^2x + 3.5xy = y^2 - xy + y"));
+        // check if multiplication is valid
         assertFalse(transformer.isValidInput("1^2x * 3.5xy = y^2 - xy + y"));
+        // check if division is valid
+        assertFalse(transformer.isValidInput("1^2x / 3.5xy = y^2 - xy + y"));
         // no multiplication between terms enclosed in brackets
         assertFalse(transformer.isValidInput("(1^2x - 3.5xy)(x) = y^2 - xy + y"));
         assertFalse(transformer.isValidInput("(1^2x - 3.xy)(x) = y^2 - xy + y"));
         assertFalse(transformer.isValidInput("x - ((x^2.3y^2 - x) + x) = 0"));
+        // check if (xy)^3 is valid
         assertFalse(transformer.isValidInput("x - (xy)^3) = 0"));
 
         assertTrue(transformer.isValidInput("x - ((x^-2y^2 - x) + x) = 0"));
@@ -309,6 +313,20 @@ public class TransformerUnitTest {
         HashMap<String, Double> termMap12 = transformer.buildTermMap("x - (0 - (0 - x))");
         assertEquals(keys12, termMap12.keySet());
         assertEquals(Double.valueOf(0.0), termMap12.get("x"));
+
+        // check if it works for uneven number of brackets
+        // check if nexted brackets and multiple variables with power work
+        HashSet<String> keys13 = new HashSet<>();
+        keys13.add("x^2z^3");
+        keys13.add("y");
+        keys13.add("x");
+        keys13.add("k");
+        keys13.add("!");
+
+        HashMap<String, Double> termMap13 = transformer.buildTermMap("(x^2z^3 - y + (x - (5x + 3y - 6y) - k^1 + y)");
+        // The output is undefined
+        assertNotEquals(keys13, termMap13.keySet());
+        assertEquals(Double.valueOf(1.0), termMap13.get("!"));
     }
 
     // Check if numbers add up properly
@@ -467,6 +485,7 @@ public class TransformerUnitTest {
         // test 8
         HashMap<String, Double> leftTermMap8 = transformer.buildTermMap("3.3x - (8 + y)");
         HashMap<String, Double> rightTermMap8 = transformer.buildTermMap("3.3x");
+        assertEquals(Double.valueOf(-8.0), leftTermMap8.get("#"));
         assertEquals(Double.valueOf(3.3), rightTermMap8.get("x"));
 
         // need to import hamcrest-all.jar to use the following test
@@ -474,13 +493,33 @@ public class TransformerUnitTest {
 
         // test 9
         // will get canonical form back if the input is already in canonical form
-        HashMap<String, Double> leftTermMap9 = transformer.buildTermMap("x^2 - y^2");
+        HashMap<String, Double> leftTermMap9 = transformer.buildTermMap("x^2 - y^-2");
         HashMap<String, Double> rightTermMap9 = transformer.buildTermMap("0");
         assertEquals(Double.valueOf(1.0), leftTermMap9.get("x^2"));
 
         // need to import hamcrest-all.jar to use the following test
-        assertThat(transformer.combineTerms(leftTermMap9, rightTermMap9), anyOf(is("x^2 - y^2 = 0"),is("- y^2 + x^2 = 0")));
+        assertThat(transformer.combineTerms(leftTermMap9, rightTermMap9), anyOf(is("x^2 - y^-2 = 0"),is("- y^-2 + x^2 = 0")));
+
+        // test 10: uneven number of brackets will get an Error Message
+        HashMap<String, Double> leftTermMap10 = transformer.buildTermMap("3.3x - (8 + y");
+        HashMap<String, Double> rightTermMap10 = transformer.buildTermMap("3.3x");
+        assertEquals(Double.valueOf(1.0), leftTermMap10.get("!"));
+        assertEquals(Double.valueOf(3.3), rightTermMap10.get("x"));
+
+        // need to import hamcrest-all.jar to use the following test
+        assertThat(transformer.combineTerms(leftTermMap10, rightTermMap10), anyOf(is("8 + ! = 0"),is("! + 8 = 0")));
     }
 
+    // it is essentially calling buildTermMap and combineTerms so the above tests are enough
+    @Test
+    public void testTransformEq() {
 
+        Transformer transformer = new Transformer();
+
+        // test 1: test if we get the right message when we have uneven number of brackets
+        HashMap<String, Double> leftTermMap1 = transformer.buildTermMap("3.3x - (8 + y");
+        HashMap<String, Double> rightTermMap1 = transformer.buildTermMap("3.3x");
+
+        assertEquals("The equation doesn't have an even number of brackets.", transformer.transformEq("3.3x - (8 + y = 3.3x"));
+    }
 }

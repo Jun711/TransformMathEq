@@ -1,26 +1,61 @@
 package com.jun.canonicalizer;
 
-import android.util.Log;
-
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.HashSet;
 
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+
 
 import static org.junit.Assert.*;
+
 
 /**
  * To work on unit tests, switch the Test Artifact in the Build Variants view.
  */
-public class CanonicalizerUnitTest {
+public class TransformerUnitTest {
     @Test
-    public void addition_isCorrect() throws Exception {
+    public void assuranceTest() throws Exception {
         assertEquals(4, 2 + 2);
         assertEquals("\\.","\\.");
         assertEquals('.','.');
         assertEquals(Integer.toString(-1),"-1");
+        assertTrue(5.0 % 1 == 0);
+        assertFalse(5.5 % 1 == 0);
+        assertTrue(Math.floor(5.5) == 5);
+        assertTrue(Math.floor(5.0) == 5);
+    }
+
+    // Check if the input is valid
+    @Test
+    public void testIsValidInput() {
+
+        Transformer transformer = new Transformer();
+        // doesn't handle y^ == y^1
+        assertFalse(transformer.isValidInput("x^2 + 3.5xy + y = y^ - xy + y"));
+        assertFalse(transformer.isValidInput("x^2 + 3.5xy y = y^ - xy + y"));
+        assertFalse(transformer.isValidInput("x7^2 + 3.5xy = y^2 - xy + y"));
+        assertFalse(transformer.isValidInput("1^2x + 3.5xy = y^2 - xy + y"));
+        assertFalse(transformer.isValidInput("1^2x * 3.5xy = y^2 - xy + y"));
+        // no multiplication between terms enclosed in brackets
+        assertFalse(transformer.isValidInput("(1^2x - 3.5xy)(x) = y^2 - xy + y"));
+        assertFalse(transformer.isValidInput("(1^2x - 3.xy)(x) = y^2 - xy + y"));
+        assertFalse(transformer.isValidInput("x - ((x^2.3y^2 - x) + x) = 0"));
+
+        assertTrue(transformer.isValidInput("x - ((x^-2y^2 - x) + x) = 0"));
+        assertTrue(transformer.isValidInput("x - ((x^2y^2 - x) + x) = 0"));
+        assertTrue(transformer.isValidInput("x - ((y^2 - x) + x) = 0"));
+        assertTrue(transformer.isValidInput("x - (y^2 - x) = 0"));
+        assertTrue(transformer.isValidInput("0x - 0y = 0"));
+        assertTrue(transformer.isValidInput("x^2 + 3.5xy + y = y^2 - xy + y"));
+        assertTrue(transformer.isValidInput("x^2 + 3.5xy y = y^1 - xy + y"));
+        assertTrue(transformer.isValidInput("x = 1"));
+        assertTrue(transformer.isValidInput("x - (0 - (0 - x)) = 0"));
+        assertTrue(transformer.isValidInput("5 - 0 = 5"));
+        assertTrue(transformer.isValidInput("0 = 0"));
     }
 
     @Test
@@ -367,31 +402,75 @@ public class CanonicalizerUnitTest {
         assertEquals(Double.valueOf(1.0), termMap10.get("z"));
     }
 
+    // Check if combineTerms works as expected
     @Test
-    public void testIsValidInput() {
-
+    public void testCombineTerms() {
         Transformer transformer = new Transformer();
-        // doesn't handle y^ == y^1
-        assertFalse(transformer.isValidInput("x^2 + 3.5xy + y = y^ - xy + y"));
-        assertFalse(transformer.isValidInput("x^2 + 3.5xy y = y^ - xy + y"));
-        assertFalse(transformer.isValidInput("x7^2 + 3.5xy = y^2 - xy + y"));
-        assertFalse(transformer.isValidInput("1^2x + 3.5xy = y^2 - xy + y"));
-        assertFalse(transformer.isValidInput("1^2x * 3.5xy = y^2 - xy + y"));
-        // no multiplication between terms enclosed in brackets
-        assertFalse(transformer.isValidInput("(1^2x - 3.5xy)(x) = y^2 - xy + y"));
-        assertFalse(transformer.isValidInput("(1^2x - 3.xy)(x) = y^2 - xy + y"));
-        assertFalse(transformer.isValidInput("x - ((x^2.3y^2 - x) + x) = 0"));
 
-        assertTrue(transformer.isValidInput("x - ((x^-2y^2 - x) + x) = 0"));
-        assertTrue(transformer.isValidInput("x - ((x^2y^2 - x) + x) = 0"));
-        assertTrue(transformer.isValidInput("x - ((y^2 - x) + x) = 0"));
-        assertTrue(transformer.isValidInput("x - (y^2 - x) = 0"));
-        assertTrue(transformer.isValidInput("0x - 0y = 0"));
-        assertTrue(transformer.isValidInput("x^2 + 3.5xy + y = y^2 - xy + y"));
-        assertTrue(transformer.isValidInput("x^2 + 3.5xy y = y^1 - xy + y"));
-        assertTrue(transformer.isValidInput("x = 1"));
-        assertTrue(transformer.isValidInput("x - (0 - (0 - x)) = 0"));
-        assertTrue(transformer.isValidInput("5 - 0 = 5"));
-        assertTrue(transformer.isValidInput("0 = 0"));
+        // test 1
+        HashMap<String, Double> leftTermMap1 = transformer.buildTermMap("3x + y - 1");
+        HashMap<String, Double> rightTermMap1 = transformer.buildTermMap("3x + y - 1");
+        assertEquals("0 = 0", transformer.combineTerms(leftTermMap1, rightTermMap1));
+
+        // test 2
+        HashMap<String, Double> leftTermMap2 = transformer.buildTermMap("x^2 + 3.5xy + y");
+        HashMap<String, Double> rightTermMap2 = transformer.buildTermMap("y^2 - xy + y");
+        assertEquals(Double.valueOf(1.0), leftTermMap2.get("x^2"));
+        assertEquals(Double.valueOf(3.5), leftTermMap2.get("xy"));
+        assertEquals(Double.valueOf(1.0), leftTermMap2.get("y"));
+        assertEquals(Double.valueOf(1.0), rightTermMap2.get("y^2"));
+        assertEquals(Double.valueOf(-1.0), rightTermMap2.get("xy"));
+        assertEquals(Double.valueOf(1.0), rightTermMap2.get("y"));
+        assertEquals("x^2 - y^2 + 4.5xy = 0", transformer.combineTerms(leftTermMap2, rightTermMap2));
+
+        // test 3
+        HashMap<String, Double> leftTermMap3 = transformer.buildTermMap("x");
+        HashMap<String, Double> rightTermMap3 = transformer.buildTermMap("1");
+        assertEquals(Double.valueOf(1.0), leftTermMap3.get("x"));
+        assertEquals(Double.valueOf(1.0), rightTermMap3.get("#"));
+
+        // need to import hamcrest-all.jar to use the following test
+        assertThat(transformer.combineTerms(leftTermMap3, rightTermMap3), anyOf(is("x - 1 = 0"),is("- 1 + x = 0")));
+
+        // test 4
+        HashMap<String, Double> leftTermMap4 = transformer.buildTermMap("x - (y^2 - x)");
+        HashMap<String, Double> rightTermMap4 = transformer.buildTermMap("0");
+        assertEquals(Double.valueOf(2.0), leftTermMap4.get("x"));
+        assertEquals(Double.valueOf(-1.0), leftTermMap4.get("y^2"));
+
+        // need to import hamcrest-all.jar to use the following test
+        assertThat(transformer.combineTerms(leftTermMap4, rightTermMap4), anyOf(is("2x - y^2 = 0"),is("- y^2 + 2x = 0")));
+
+        // test 5
+        HashMap<String, Double> leftTermMap5 = transformer.buildTermMap("x - (0 - (0 - x))");
+        HashMap<String, Double> rightTermMap5 = transformer.buildTermMap("0");
+        assertEquals(Double.valueOf(0.0), leftTermMap5.get("x"));
+
+        assertEquals("0 = 0", transformer.combineTerms(leftTermMap5, rightTermMap5));
+
+        // test 6
+        HashMap<String, Double> leftTermMap6 = transformer.buildTermMap("x");
+        HashMap<String, Double> rightTermMap6 = transformer.buildTermMap("x");
+        assertEquals(Double.valueOf(1.0), leftTermMap6.get("x"));
+
+        assertEquals("0 = 0", transformer.combineTerms(leftTermMap6, rightTermMap6));
+
+        // test 7
+        HashMap<String, Double> leftTermMap7 = transformer.buildTermMap("x^0");
+        HashMap<String, Double> rightTermMap7 = transformer.buildTermMap("x");
+        assertEquals(Double.valueOf(1.0), rightTermMap7.get("x"));
+
+        // need to import hamcrest-all.jar to use the following test
+        assertThat(transformer.combineTerms(leftTermMap7, rightTermMap7), anyOf(is("1 - x = 0"),is("-x + 1 = 0")));
+
+        // test 8
+        HashMap<String, Double> leftTermMap8 = transformer.buildTermMap("3.3x - (8 + y)");
+        HashMap<String, Double> rightTermMap8 = transformer.buildTermMap("3.3x");
+        assertEquals(Double.valueOf(3.3), rightTermMap8.get("x"));
+
+        // need to import hamcrest-all.jar to use the following test
+        assertThat(transformer.combineTerms(leftTermMap8, rightTermMap8), anyOf(is("- 8 - y = 0"),is("- y - 8 = 0")));
     }
+
+
 }

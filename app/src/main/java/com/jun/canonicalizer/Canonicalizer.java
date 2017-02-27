@@ -13,28 +13,30 @@ import java.util.Scanner;
  */
 public class Canonicalizer {
     public static void main(String[] args) {
+        String mode = "";
+        Scanner scanner = new Scanner(System.in);
+        Transformer transformer = new Transformer();
         while (true) {
             try {
-                Scanner scanner = new Scanner(System.in);
-                String mode = "";
-                System.out.println("Enter 'f' for File Mode 'i' for Interactive Mode.");
-                String choice = scanner.nextLine();
-                Transformer transformer = new Transformer();
+                if (mode != null && mode.isEmpty()) {
+                    //Scanner scanner = new Scanner(System.in);
+                    System.out.println("Enter 'f' for File Mode 'i' for Interactive Mode.");
+                    mode = scanner.nextLine();
+                }
 
-                if (choice.equals("f") || choice.equals("F")) {
+                if (mode.equals("f") || mode.equals("F")) {
                     System.out.println("Enter Filename:");
                     String fileName = scanner.nextLine();
                     FileReader fileReader = new FileReader(fileName);
                     BufferedReader bufferedReader = new BufferedReader(fileReader);
 
-
                     FileWriter fileWriter = new FileWriter("output.out");
                     BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
-                    String lineEq = null;
+                    String lineEq;
                     while ((lineEq = bufferedReader.readLine()) != null) {
                         if (transformer.isValidInput(lineEq)) {
-                            String res = transformer.transformEq(transformer.parseEq(lineEq));
+                            String res = transformer.transformEq(lineEq);
                             System.out.print(lineEq + " => " + res);
                             bufferedWriter.write(res);
 
@@ -46,11 +48,11 @@ public class Canonicalizer {
                     bufferedReader.close();
                     bufferedWriter.close();
 
-                } else if (choice.equals("i") || choice.equals("I")) {
+                } else if (mode.equals("i") || mode.equals("I")) {
                     System.out.println("Enter Equation:");
                     String equation = scanner.nextLine();
                     if (transformer.isValidInput(equation)) {
-                        System.out.println(transformer.transformEq(transformer.parseEq(equation)));
+                        System.out.println(transformer.transformEq(equation));
                     } else {
                         System.out.println("This input is invalid.");
                     }

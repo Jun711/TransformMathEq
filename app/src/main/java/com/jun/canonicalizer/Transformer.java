@@ -4,6 +4,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Created by Jun on 2017-02-27.
@@ -15,14 +17,10 @@ public class Transformer {
 
     }
 
-    public String transformEq(String equation) {
-        return "";
-    }
-
     /**
-     * Parse equation to process all the terms
+     * Transform an equation to its canonical form
      */
-    public String parseEq(String equation) {
+    public String transformEq(String equation) {
         String[] sides = equation.split("=");
 
         String leftSide = sides[0].trim();
@@ -31,9 +29,73 @@ public class Transformer {
         HashMap<String, Double> leftTermMap= buildTermMap(leftSide);
         HashMap<String, Double> rightTermMap= buildTermMap(rightSide);
 
-        return "";
+        return combineTerms(leftTermMap, rightTermMap);
     }
 
+    /**
+     * Combine terms we get on left and right of the equation and return all the terms as a string
+     */
+    public String combineTerms(HashMap<String, Double> leftTermMap, HashMap<String, Double> rightTermMap) {
+        StringBuilder transformedSb = new StringBuilder();
+        Iterator<Map.Entry<String, Double>> rightMapEntries = rightTermMap.entrySet().iterator();
+        // Combine all the terms into one map
+        while (rightMapEntries.hasNext()) {
+            Map.Entry<String, Double> entry = rightMapEntries.next();
+//            System.out.println(pair.getKey() + " = " + pair.getValue());
+            Double coefficient = entry.getValue();
+            if (leftTermMap.containsKey(entry.getKey())) {
+                leftTermMap.put(entry.getKey(), leftTermMap.get(entry.getKey()) - coefficient);
+            } else {
+                leftTermMap.put(entry.getKey(), -1.0 * coefficient);
+            }
+        }
+
+        Iterator<Map.Entry<String, Double>> leftMapEntries = leftTermMap.entrySet().iterator();
+        boolean notFirstTerm = false;
+        while (leftMapEntries.hasNext()) {
+            Map.Entry<String, Double> entry = leftMapEntries.next();
+            Double coefficient = entry.getValue();
+
+            if (coefficient != 0) {
+                // to determine which sign to include
+                if (coefficient > 0 && !notFirstTerm) {
+                    notFirstTerm = true;
+                } else if(coefficient > 0 && notFirstTerm){
+                    transformedSb.append(" + ");
+                } else if (coefficient < 0 && !notFirstTerm){
+                    transformedSb.append("- ");
+                    notFirstTerm = true;
+                    coefficient *= -1;
+                } else {
+                    transformedSb.append(" - ");
+                    coefficient *= -1;
+                }
+
+                if (coefficient == 1.0) {
+                    // if it is a number, append only the coefficient
+                    if (!entry.getKey().equals("#"))
+                        transformedSb.append(entry.getKey());
+                    else
+                        transformedSb.append('1');
+                    continue;
+                }
+
+                if (coefficient % 1 == 0)
+                    transformedSb.append(coefficient.intValue());
+                else
+                    transformedSb.append(coefficient);
+
+                if (!entry.getKey().equals("#"))
+                    transformedSb.append(entry.getKey());
+            }
+        }
+
+        if (transformedSb.length() == 0) {
+            transformedSb.append("0");
+        }
+        transformedSb.append(" = 0");
+        return transformedSb.toString();
+    }
     /**
      * Build a HashMap that maps variables to their coefficient and sum of numbers to "#"
      * if a variable has a power 0, its coefficient contributes to the sum of number
